@@ -17,7 +17,6 @@ import {
   UPDATE_QUANTITY_REQUEST,
   UPDATE_QUANTITY_SUCCESS,
   UPDATE_QUANTITY_FAILURE,
-  DELETE_SUBSCRIPTIONS_REQUEST,
   DELETE_SUBSCRIPTIONS_SUCCESS,
   DELETE_SUBSCRIPTIONS_FAILURE,
   SUBSCRIPTIONS_UPDATE_SEARCH_QUERY,
@@ -50,7 +49,6 @@ export default (state = initialState, action) => {
   switch (action.type) {
     case SUBSCRIPTIONS_REQUEST:
     case UPDATE_QUANTITY_REQUEST:
-    case DELETE_SUBSCRIPTIONS_REQUEST:
       return state.set('loading', true);
     case SUBSCRIPTIONS_COLUMNS_REQUEST:
       return state
@@ -91,7 +89,9 @@ export default (state = initialState, action) => {
     }
 
     case DELETE_SUBSCRIPTIONS_SUCCESS:
-      return state.set('loading', false);
+      return state
+        .set('deleteButtonDisabled', true)
+        .set('loading', false);
 
     case UPDATE_QUANTITY_SUCCESS:
       return state.set('loading', false);

@@ -32,6 +32,8 @@ import {
 } from './SubscriptionConstants';
 import { filterRHSubscriptions, selectSubscriptionsQuantitiesFromResponse } from './SubscriptionHelpers.js';
 import { apiError } from '../../move_to_foreman/common/helpers.js';
+import { pollTaskUntilDone } from '../Tasks/TaskActions';
+import { POLL_TASK_INTERVAL } from '../Tasks/TaskConstants';
 
 export const createSubscriptionParams = (extendedParams = {}) => ({
   ...{
@@ -127,10 +129,8 @@ export const deleteSubscriptions = poolIds => async (dispatch) => {
 
   try {
     const { data } = await api.delete(`/organizations/${(orgId())}/upstream_subscriptions`, {}, params);
-    return dispatch({
-      type: DELETE_SUBSCRIPTIONS_SUCCESS,
-      response: data,
-    });
+    dispatch(pollTaskUntilDone(data.id, {}, POLL_TASK_INTERVAL, Number(orgId())));
+    return dispatch({ type: DELETE_SUBSCRIPTIONS_SUCCESS });
   } catch (error) {
     return dispatch(apiError(DELETE_SUBSCRIPTIONS_FAILURE, error));
   }

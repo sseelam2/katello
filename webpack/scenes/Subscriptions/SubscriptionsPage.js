@@ -20,10 +20,15 @@ import {
   BULK_TASK_SEARCH_INTERVAL,
   SUBSCRIPTION_TABLE_NAME,
 } from './SubscriptionConstants';
-
+import { POLL_TASK_INTERVAL } from '../Tasks/TaskConstants';
 import './SubscriptionsPage.scss';
 
 class SubscriptionsPage extends Component {
+  constructor(props) {
+    super(props);
+    this.subscriptionTableElement = React.createRef();
+  }
+
   componentDidMount() {
     this.props.resetTasks();
     this.props.loadSetting('content_disconnected');
@@ -41,14 +46,14 @@ class SubscriptionsPage extends Component {
     const [task] = tasks;
 
     if (numberOfTasks > 0) {
-      if (currentOrg === task.input.organization.id) {
+      if (currentOrg === task.input.current_organization_id) {
         if (!taskModalOpened) {
           openTaskModal();
         }
       }
 
       if (numberOfPrevTasks === 0 || prevTasks[0].id !== task.id) {
-        if (currentOrg === task.input.organization.id) {
+        if (currentOrg === task.input.current_organization_id) {
           this.handleDoneTask(task);
         } else if (taskModalOpened) {
           closeTaskModal();
@@ -113,7 +118,6 @@ class SubscriptionsPage extends Component {
   }
 
   async handleDoneTask(taskToPoll) {
-    const POLL_TASK_INTERVAL = 5000;
     const { pollTaskUntilDone, loadSubscriptions, organization } = this.props;
 
     const task = await pollTaskUntilDone(taskToPoll.id, {}, POLL_TASK_INTERVAL, organization.id);
@@ -200,7 +204,9 @@ class SubscriptionsPage extends Component {
     });
 
     const onDeleteSubscriptions = (selectedRows) => {
+      this.startManifestTask();
       this.props.deleteSubscriptions(selectedRows);
+      this.subscriptionTableElement.current.updateSelectedRows();
       closeDeleteModal();
     };
 
@@ -299,6 +305,7 @@ class SubscriptionsPage extends Component {
                 toggleDeleteButton={toggleDeleteButton}
                 task={task}
                 bulkSearch={this.props.bulkSearch}
+                ref={this.subscriptionTableElement}
               />
               <ModalProgressBar
                 show={taskModalOpened}

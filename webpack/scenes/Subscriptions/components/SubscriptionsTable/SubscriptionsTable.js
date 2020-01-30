@@ -273,6 +273,12 @@ class SubscriptionsTable extends Component {
     return false;
   };
 
+  updateSelectedRows = () => {
+    this.setState({
+      selectedRows: [],
+    });
+  };
+
   render() {
     return (
       <LoadingState {...this.getLoadingStateProps()}>
