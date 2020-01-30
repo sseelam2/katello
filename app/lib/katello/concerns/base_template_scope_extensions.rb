@@ -7,7 +7,7 @@ module Katello
         def allowed_helpers
           super + [:errata, :host_subscriptions, :host_applicable_errata_ids, :host_applicable_errata_filtered,
                    :host_latest_applicable_rpm_version, :load_pools, :load_errata_applications, :host_content_facet,
-                   :host_sla, :host_products, :sub_name, :sub_sku, :registered_through]
+                   :host_sla, :host_products, :sub_name, :sub_sku, :registered_through, :last_checkin]
         end
       end
 
@@ -87,7 +87,7 @@ module Katello
 
         tasks = load_resource(klass: ForemanTasks::Task,
                               where: condition,
-                              permission: 'view_tasks',
+                              permission: 'view_foreman_tasks',
                               joins: 'LEFT OUTER JOIN template_invocations ON foreman_tasks_tasks.id = template_invocations.run_host_job_task_id LEFT OUTER JOIN templates ON template_invocations.template_id = templates.id',
                               select: 'foreman_tasks_tasks.*,template_invocations.id AS template_invocation_id',
                               search: search

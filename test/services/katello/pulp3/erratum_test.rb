@@ -15,9 +15,6 @@ module Katello
           @repo.root.update_attributes(:url => 'file:///var/www/test_repos/zoo')
           ensure_creatable(@repo, @master)
           create_repo(@repo, @master)
-          ForemanTasks.sync_task(
-              ::Actions::Katello::Repository::MetadataGenerate, @repo,
-              repository_creation: true)
           @repo.reload
         end
 

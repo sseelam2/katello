@@ -10,11 +10,10 @@ module ::Actions::Pulp3
       create_repo(@repo, @master)
 
       ForemanTasks.sync_task(
-        ::Actions::Katello::Repository::MetadataGenerate, @repo,
-        repository_creation: true)
+        ::Actions::Katello::Repository::MetadataGenerate, @repo)
 
       assert_equal 1,
-        Katello::Pulp3::DistributionReference.where(root_repository_id: @repo.root.id).count,
+        Katello::Pulp3::DistributionReference.where(repository_id: @repo.id).count,
         "Expected a distribution reference."
       @repo.root.update_attributes(
         verify_ssl_on_sync: false,
@@ -60,8 +59,7 @@ module ::Actions::Pulp3
     def test_update_unset_unprotected
       @repo.root.update_attributes(unprotected: true)
       assert @repo.root.unprotected
-      assert_equal 1, Katello::Pulp3::DistributionReference.where(
-        root_repository_id: @repo.root.id).count
+      assert_equal 1, Katello::Pulp3::DistributionReference.where(repository_id: @repo.id).count
 
       @repo.root.update_attributes(unprotected: false)
 
@@ -70,8 +68,7 @@ module ::Actions::Pulp3
         @repo,
         @master)
 
-      dist_refs = Katello::Pulp3::DistributionReference.where(
-         root_repository_id: @repo.root.id)
+      dist_refs = Katello::Pulp3::DistributionReference.where(repository_id: @repo.id)
 
       assert_equal 1, dist_refs.count, "Expected 1 distribution reference."
     end
@@ -84,8 +81,7 @@ module ::Actions::Pulp3
         @repo,
         @master)
 
-      dist_refs = Katello::Pulp3::DistributionReference.where(
-        root_repository_id: @repo.root.id)
+      dist_refs = Katello::Pulp3::DistributionReference.where(repository_id: @repo.id)
 
       assert_equal 1, dist_refs.count, "Expected only 1 distribution reference."
       @repo.root.update_attributes(unprotected: true)
@@ -95,8 +91,7 @@ module ::Actions::Pulp3
         @repo,
         @master)
 
-      dist_refs = Katello::Pulp3::DistributionReference.where(
-        root_repository_id: @repo.root.id)
+      dist_refs = Katello::Pulp3::DistributionReference.where(repository_id: @repo.id)
       assert_equal 1, dist_refs.count, "Expected a distribution reference."
     end
   end

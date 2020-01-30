@@ -53,11 +53,13 @@ module Katello
           distributors
         end
 
-        def distributors_to_publish(_options)
-          if repo.clone && !repo.master? && smart_proxy.pulp_master?
-            source_service = repo.target_repository.backend_service(smart_proxy)
+        def distributors_to_publish(options)
+          source_repo_id = options[:source_repository]&.fetch(:id)
+          if (source_repo_id || !repo.master?) && smart_proxy.pulp_master?
+            source_repository = source_repo_id ? ::Katello::Repository.find(source_repo_id) : repo.target_repository
+            source_service = source_repository.backend_service(smart_proxy)
             source_distributor_id = source_service.lookup_distributor_id(Runcible::Models::YumDistributor.type_id)
-            {Runcible::Models::YumCloneDistributor => {source_repo_id: repo.target_repository.pulp_id,
+            {Runcible::Models::YumCloneDistributor => {source_repo_id: source_repository.pulp_id,
                                                        source_distributor_id: source_distributor_id}}
           else
             {Runcible::Models::YumDistributor => {}}
@@ -173,7 +175,7 @@ module Katello
           task = nil
           repo.remove_partial_errata! do |errata_to_delete|
             task = repo.unassociate_by_filter(::Katello::ContentViewErratumFilter::CONTENT_TYPE,
-                                                "id" => { "$in" => errata_to_delete.map(&:errata_id) })
+                                                "id" => { "$in" => errata_to_delete.map(&:errata_id).sort })
           end
           task
         end
@@ -244,8 +246,7 @@ module Katello
             remove = clause_gen.remove_clause
             remove_clauses = {filters: {unit: remove}} if remove
           else
-            non_modular_rpms = ::Katello::Rpm.in_repositories(repo).non_modular.pluck(:filename)
-            copy_clauses = non_modular_rpms.blank? ? nil : {filters: {unit: ContentViewPackageFilter.generate_rpm_clauses(non_modular_rpms)}}
+            copy_clauses = {}
             remove_clauses = nil
           end
 

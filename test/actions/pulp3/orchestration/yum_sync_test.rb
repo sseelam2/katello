@@ -10,8 +10,7 @@ module ::Actions::Pulp3
       @repo.root.update_attributes!(url: 'https://jlsherrill.fedorapeople.org/fake-repos/needed-errata/')
       create_repo(@repo, @master)
       ForemanTasks.sync_task(
-          ::Actions::Katello::Repository::MetadataGenerate, @repo,
-          repository_creation: true)
+          ::Actions::Katello::Repository::MetadataGenerate, @repo)
 
       repository_reference = Katello::Pulp3::RepositoryReference.find_by(
           :root_repository_id => @repo.root.id,
@@ -19,8 +18,7 @@ module ::Actions::Pulp3
 
       assert repository_reference
       refute_empty repository_reference.repository_href
-      refute_empty Katello::Pulp3::DistributionReference.where(
-          root_repository_id: @repo.root.id)
+      refute_empty Katello::Pulp3::DistributionReference.where(repository_id: @repo.id)
       @repo_version_href = @repo.version_href
     end
 

@@ -284,7 +284,7 @@ module ::Actions::Katello::Repository
                                 [{href: "demo_task/artifact_href"}], repository_pulp3, proxy)
       assert_action_planed_with(action, ::Actions::Pulp3::Repository::SaveVersion,
                                 repository_pulp3,
-                                [{href: "demo_task/version_href"}])
+                                tasks: [{href: "demo_task/version_href"}])
     end
 
     it 'plans for Pulp3 with duplicate' do
@@ -300,7 +300,7 @@ module ::Actions::Katello::Repository
                                 "demo_content/href", repository_pulp3, proxy)
       assert_action_planed_with(action, ::Actions::Pulp3::Repository::SaveVersion,
                                 repository_pulp3,
-                                [{href: "demo_task/version_href"}])
+                                tasks: [{href: "demo_task/version_href"}])
     end
   end
 
@@ -477,7 +477,6 @@ module ::Actions::Katello::Repository
       action = create_action pulp3_metadata_generate_action_class
       action.stubs(:action_subject).with(repository_pulp3)
       plan_action action, repository_pulp3, proxy, :contents_changed => true
-      refute_action_planed action, ::Actions::Pulp3::Repository::CreateVersion
       assert_action_planed_with(action, ::Actions::Pulp3::Repository::CreatePublication, repository_pulp3, proxy, :contents_changed => true)
       assert_action_planed_with(action, ::Actions::Pulp3::Repository::RefreshDistribution, repository_pulp3, proxy, :contents_changed => true)
     end
@@ -486,7 +485,6 @@ module ::Actions::Katello::Repository
       action = create_action pulp3_metadata_generate_action_class
       action.stubs(:action_subject).with(repository_ansible_collection_pulp3)
       plan_action action, repository_ansible_collection_pulp3, proxy, :contents_changed => true
-      refute_action_planed action, ::Actions::Pulp3::Repository::CreateVersion
       refute_action_planed action, ::Actions::Pulp3::Repository::CreatePublication
       assert_action_planed_with(action, ::Actions::Pulp3::Repository::RefreshDistribution, repository_ansible_collection_pulp3, proxy, :contents_changed => true)
     end
@@ -639,8 +637,13 @@ module ::Actions::Katello::Repository
       smart_proxy_service_2.smart_proxy.add_lifecycle_environment(repository.environment)
 
       plan_action(action, repository)
-      assert_action_planned_with(action, ::Actions::BulkAction, ::Actions::Katello::CapsuleContent::Sync,
-                                 [smart_proxy_service_1.smart_proxy, smart_proxy_service_2.smart_proxy], :repository_id => repository.id)
+      assert_action_planned_with(action, ::Actions::BulkAction) do |action, proxy_list, options|
+        assert_equal ::Actions::Katello::CapsuleContent::Sync, action
+        assert_equal 2, proxy_list.length
+        assert_include proxy_list, smart_proxy_service_1.smart_proxy
+        assert_include proxy_list, smart_proxy_service_2.smart_proxy
+        assert_equal repository.id, options[:repository_id]
+      end
     end
   end
 

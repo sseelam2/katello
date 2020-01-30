@@ -2,7 +2,6 @@ module Katello
   class Ping
     OK_RETURN_CODE = 'ok'.freeze
     FAIL_RETURN_CODE = 'FAIL'.freeze
-    WARN_RETURN_CODE = 'WARN'.freeze
     PACKAGES = %w(katello candlepin pulp qpid foreman tfm hammer).freeze
 
     class << self
@@ -33,7 +32,7 @@ module Katello
         # set overall status result code
         result = {:services => result}
         result[:services].each_value do |v|
-          result[:status] = [OK_RETURN_CODE, WARN_RETURN_CODE].include?(v[:status]) ? OK_RETURN_CODE : FAIL_RETURN_CODE
+          result[:status] = v[:status] == OK_RETURN_CODE ? OK_RETURN_CODE : FAIL_RETURN_CODE
         end
         result
       end
@@ -45,37 +44,34 @@ module Katello
         }
       end
 
-      def daemon_status_message(status)
-        "#{status[:processed_count]} Processed, #{status[:failed_count]} Failed, #{status[:queue_depth]} in queue"
+      def event_daemon_status(status, result)
+        running = status&.dig(:running)
+
+        if running
+          result[:message] = "#{status[:processed_count]} Processed, #{status[:failed_count]} Failed"
+        else
+          result[:status] = FAIL_RETURN_CODE
+          result[:message] = _("Not running")
+        end
       end
 
       def ping_katello_events(result)
         exception_watch(result) do
-          status = Katello::EventMonitor::PollerThread.status
-
-          if status[:queue_depth] && status[:queue_depth] > 1000
-            result[:status] = WARN_RETURN_CODE
-          end
-
-          result[:message] = daemon_status_message(status)
+          status = Katello::EventMonitor::PollerThread.status(refresh: false)
+          event_daemon_status(status, result)
         end
       end
 
       def ping_candlepin_events(result)
         exception_watch(result) do
-          status = Katello::CandlepinEventListener.status
-
-          if status[:queue_depth] && status[:queue_depth] > 1000
-            result[:status] = WARN_RETURN_CODE
-          end
-
-          result[:message] = daemon_status_message(status)
+          status = Katello::CandlepinEventListener.status(refresh: false)
+          event_daemon_status(status, result)
         end
       end
 
       def ping_pulp3_without_auth(service_result, capsule_id)
         exception_watch(service_result) do
-          Katello::Ping.pulp3_without_auth(fetch_proxy(capsule_id).pulp3_url("api/v3"))
+          Katello::Ping.pulp3_without_auth(fetch_proxy(capsule_id).pulp3_url)
         end
       end
 
@@ -197,10 +193,9 @@ module Katello
         end
 
         workers = json["online_workers"] || []
-        resource_manager_exists = workers.any? { |worker| worker["name"].include?("resource-manager@") }
-        reservered_resource_worker_exists = workers.any? { |worker| worker["name"] =~ /reserved-resource-worker-./ }
+        resource_manager_exists = workers.any? { |worker| worker["name"].include?("resource-manager") }
 
-        unless resource_manager_exists && reservered_resource_worker_exists
+        unless resource_manager_exists && workers.count > 1
           fail _("Not all necessary pulp workers running at %s.") % url
         end
 

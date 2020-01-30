@@ -19,8 +19,8 @@
         <dt translate>Subscription UUID</dt>
         <dd>{{ host.subscription_facet_attributes.uuid }}</dd>
 
-        <dt translate>Bios UUID</dt>
-        <dd>{{ host.subscription_facet_attributes.dmi_system_uuid }}</dd>
+        <dt translate>BIOS UUID</dt>
+        <dd>{{ host.subscription_facet_attributes.dmi_uuid }}</dd>
 
         <dt translate>Description</dt>
         <dd bst-edit-textarea="host.comment"
@@ -82,12 +82,12 @@
         </dd>
 
         <dt translate>Auto-Attach</dt>
-        <dd bst-edit-checkbox="host.subscription_facet_attributes.autoheal"
+        <dd ng-if= "simpleContentAccessEnabled" translate> Not Applicable </dd>
+        <dd ng-if= "!simpleContentAccessEnabled" bst-edit-select="host.subscription_facet_attributes.autoheal"
             readonly="denied('edit_hosts', host)"
             formatter="booleanToYesNo"
             on-save="saveSubscriptionFacet(host)">
         </dd>
-
       </dl>
 
       <div class="divider"></div>

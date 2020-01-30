@@ -35,9 +35,9 @@ module Katello
     def_param_group :repo do
       param :url, String, :desc => N_("repository source url")
       param :gpg_key_id, :number, :desc => N_("id of the gpg key that will be assigned to the new repository")
-      param :ssl_ca_cert_id, :number, :desc => N_("Idenifier of the SSL CA Cert")
-      param :ssl_client_cert_id, :number, :desc => N_("Identifier of the SSL Client Cert")
-      param :ssl_client_key_id, :number, :desc => N_("Identifier of the SSL Client Key")
+      param :ssl_ca_cert_id, :number, :desc => N_("Identifier of the content credential containing the SSL CA Cert")
+      param :ssl_client_cert_id, :number, :desc => N_("Identifier of the content credential containing the SSL Client Cert")
+      param :ssl_client_key_id, :number, :desc => N_("Identifier of the content credential containing the SSL Client Key")
       param :unprotected, :bool, :desc => N_("true if this repository can be published via HTTP")
       param :checksum_type, String, :desc => N_("Checksum of the repository, currently 'sha1' & 'sha256' are supported")
       param :docker_upstream_name, String, :desc => N_("Name of the upstream docker repository")
@@ -55,7 +55,7 @@ module Katello
       param :ignore_global_proxy, :bool, :desc => N_("if true, will ignore the globally configured proxy when syncing"), :deprecated => true
       param :ignorable_content, Array, :desc => N_("List of content units to ignore while syncing a yum repository. Must be subset of %s") % RootRepository::IGNORABLE_CONTENT_UNIT_TYPES.join(",")
       param :ansible_collection_requirements, String, :desc => N_("Contents of requirement yaml file to sync from URL")
-      param :http_proxy_policy, ::Katello::RootRepository::HTTP_PROXY_POLICIES, :desc => N_("policies for http proxy for content sync")
+      param :http_proxy_policy, ::Katello::RootRepository::HTTP_PROXY_POLICIES, :desc => N_("policies for HTTP proxy for content sync")
       param :http_proxy_id, :number, :desc => N_("ID of a HTTP Proxy")
     end
 
@@ -217,6 +217,10 @@ module Katello
       unless RepositoryTypeManager.creatable_by_user?(repo_params[:content_type])
         msg = _("Invalid params provided - content_type must be one of %s") % RepositoryTypeManager.creatable_repository_types.keys.join(",")
         fail HttpErrors::UnprocessableEntity, msg
+      end
+
+      if repo_params['content_type'] == "puppet" || repo_params['content_type'] == "ostree"
+        ::Foreman::Deprecation.api_deprecation_warning("Puppet and OSTree will no longer be supported in Katello 3.16")
       end
 
       gpg_key = get_content_credential(repo_params, CONTENT_CREDENTIAL_GPG_KEY_TYPE)

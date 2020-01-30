@@ -19,24 +19,24 @@ module ::Actions::Pulp3
     end
 
     def test_generate_metadata
-      refute @repo.version_href
+      assert @repo.version_href
 
-      ForemanTasks.sync_task(::Actions::Pulp3::Orchestration::Repository::GenerateMetadata, @repo, @master, repository_creation: true)
+      ForemanTasks.sync_task(::Actions::Pulp3::Orchestration::Repository::GenerateMetadata, @repo, @master)
       @repo.reload
 
-      assert @repo.version_href
       assert @repo.publication_href
     end
 
     def test_generate_with_source_repo
-      ForemanTasks.sync_task(::Actions::Pulp3::Orchestration::Repository::GenerateMetadata, @repo, @master, repository_creation: true)
+      ForemanTasks.sync_task(::Actions::Pulp3::Orchestration::Repository::GenerateMetadata, @repo, @master)
       @repo.reload
       @clone = katello_repositories(:generic_file_dev)
-      assert_equal 1, Katello::Pulp3::DistributionReference.where(root_repository_id: @clone.root.id).count
+      assert_equal 1, Katello::Pulp3::DistributionReference.where(repository_id: @repo.id).count
+
       ensure_creatable(@clone, @master)
       ForemanTasks.sync_task(::Actions::Pulp3::Orchestration::Repository::GenerateMetadata, @clone, @master, source_repository: @repo)
       assert_equal @repo.publication_href, @clone.reload.publication_href
-      assert_equal 2, Katello::Pulp3::DistributionReference.where(root_repository_id: @clone.root.id).count
+      assert_equal 1, Katello::Pulp3::DistributionReference.where(repository_id: @clone.id).count
     end
   end
 end
