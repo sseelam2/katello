@@ -27,7 +27,9 @@ import './SubscriptionsPage.scss';
 class SubscriptionsPage extends Component {
   constructor(props) {
     super(props);
-    this.subscriptionTableElement = React.createRef();
+    this.state = {
+      selectedRows: [],
+    };
   }
 
   componentDidMount() {
@@ -99,6 +101,10 @@ class SubscriptionsPage extends Component {
 
     return disabledReason;
   }
+
+  handleSelectedRowsChange = (selectedRows) => {
+    this.setState({ selectedRows });
+  };
 
   async pollTasks() {
     const { pollBulkSearch, organization } = this.props;
@@ -208,7 +214,7 @@ class SubscriptionsPage extends Component {
     const onDeleteSubscriptions = (selectedRows) => {
       this.startManifestTask();
       this.props.deleteSubscriptions(selectedRows);
-      this.subscriptionTableElement.current.updateSelectedRows();
+      this.handleSelectedRowsChange([]);
       closeDeleteModal();
     };
 
@@ -294,9 +300,9 @@ class SubscriptionsPage extends Component {
             <div id="subscriptions-table" className="modal-container">
               {simpleContentAccess && (
                 <Alert type="info">
-                This organization has Simple Content Access enabled. <br />
-                Hosts can consume from all repositories in their Content View regardless of
-                subscription status.
+                  This organization has Simple Content Access enabled. <br />
+                  Hosts can consume from all repositories in their Content View regardless of
+                  subscription status.
                 </Alert>
               )}
               <SubscriptionsTable
@@ -312,7 +318,8 @@ class SubscriptionsPage extends Component {
                 toggleDeleteButton={toggleDeleteButton}
                 task={task}
                 bulkSearch={this.props.bulkSearch}
-                ref={this.subscriptionTableElement}
+                selectedRows={this.state.selectedRows}
+                onSelectedRowsChange={this.handleSelectedRowsChange}
               />
               <ModalProgressBar
                 show={taskModalOpened}

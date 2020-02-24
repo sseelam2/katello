@@ -40,7 +40,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "apipie-rails", ">= 0.5.14"
 
   # Pulp
-  gem.add_dependency "runcible", ">= 2.12.1", "< 3.0.0"
+  gem.add_dependency "runcible", ">= 2.13.0", "< 3.0.0"
   gem.add_dependency "anemone"
 
   #pulp3
@@ -49,7 +49,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "pulp_ansible_client", "<= 0.2.0b7.dev01574717759"
   gem.add_dependency "pulp_container_client", ">= 1.0.0", "< 1.1.0"
   gem.add_dependency "pulp_rpm_client", "<= 3.1.0b1.dev01576187357"
-  gem.add_dependency "pulp_2to3_migration_client", "<= 0.0.1a1.dev01573066581"
+  gem.add_dependency "pulp_2to3_migration_client", "< 0.0.2"
 
   # UI
   gem.add_dependency "deface", '>= 1.0.2', '< 2.0.0'
